@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "pd-plugin.h"
 #include "pd-plugin-loader.h"
 
@@ -18,13 +20,15 @@ void
 pd_plugin_loader_setup (PdPluginLoader *self)
 {
     const gchar *filename;
+    g_autofree gchar *plugin_dir = NULL;
     g_autoptr(GError) error = NULL;
     GDir *plugin_directory;
     PdPluginLoaderPrivate *priv;
 
     priv = pd_plugin_loader_get_instance_private (self);
 
-    plugin_directory = g_dir_open ("plugins", 0, &error);
+    plugin_dir = g_build_filename (LIBDIR, "pd-plugins", NULL);
+    plugin_directory = g_dir_open (plugin_dir, 0, &error);
     while ((filename = g_dir_read_name (plugin_directory)) != NULL)
     {
         /* Read this library file and setup related plugin. */
@@ -33,7 +37,7 @@ pd_plugin_loader_setup (PdPluginLoader *self)
             g_autofree gchar *full_fn = NULL;
             PdPlugin *plugin;
 
-            full_fn = g_build_filename ("plugins", filename, NULL);
+            full_fn = g_build_filename (plugin_dir, filename, NULL);
             plugin = pd_plugin_new ();
             pd_plugin_setup (plugin, full_fn);
 
