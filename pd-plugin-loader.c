@@ -14,7 +14,42 @@ typedef struct
     GPtrArray *plugins;
 } PdPluginLoaderPrivate;
 
+typedef void (*PluginFunc) (PdPlugin *plugin);
+
 G_DEFINE_TYPE_WITH_PRIVATE (PdPluginLoader, pd_plugin_loader, G_TYPE_OBJECT)
+
+void
+pd_plugin_loader_call_func (PdPluginLoader *self,
+                            const gchar *func_name)
+{
+    guint i;
+    PdPluginLoaderPrivate *priv;
+
+    priv = pd_plugin_loader_get_instance_private (self);
+
+    /* Iterate all the plugins, check whether it supports this function,
+     * and run it if it does. */
+    for (i = 0; i < priv->plugins->len; i++)
+    {
+        gpointer symbol;
+        PdPlugin *plugin;
+
+        plugin = g_ptr_array_index (priv->plugins, i);
+        symbol = pd_plugin_is_function_supported (plugin, func_name);
+        if (symbol != NULL)
+        {
+            PluginFunc plugin_func;
+
+            /* Function is supported by this plugin, run it. */
+            plugin_func = symbol;
+            plugin_func (plugin);
+        }
+        else
+        {
+            g_warning ("Function not found.");
+        }
+    }
+}
 
 void
 pd_plugin_loader_setup (PdPluginLoader *self)
