@@ -4,6 +4,9 @@ pd_prefix = get_option('prefix')
 pd_bindir = join_paths(pd_prefix, get_option('bindir'))
 pd_libdir = join_paths(pd_prefix, get_option('libdir'))
 
+# modules
+gnome = import('gnome')
+
 # defines
 set_defines = [
   ['LIBDIR', pd_libdir]
@@ -25,11 +28,21 @@ pd_dep = [
   dependency('gobject-2.0')
 ]
 
+enum_headers = files(
+  'pd-plugin-job.h'
+)
+
 sources = [
   'pd-main.c',
   'pd-plugin.c',
+  'pd-plugin-job.c',
   'pd-plugin-loader.c'
 ]
+
+sources += gnome.mkenums_simple(
+  'pd-enums',
+  sources : enum_headers
+)
 
 subdir('plugins')
 
