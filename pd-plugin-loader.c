@@ -18,14 +18,20 @@ typedef void (*PluginFunc) (PdPlugin *plugin);
 
 G_DEFINE_TYPE_WITH_PRIVATE (PdPluginLoader, pd_plugin_loader, G_TYPE_OBJECT)
 
-void
-pd_plugin_loader_call_func (PdPluginLoader *self,
-                            const gchar *func_name)
+static void
+pd_plugin_loader_call_func (GTask *task,
+                            gpointer object,
+                            gpointer task_data,
+                            GCancellable *cancellable)
 {
     guint i;
+    PdPluginAction action;
+    PdPluginJob *plugin_job = PD_PLUGIN_JOB (task_data);
+    PdPluginLoader *self = PD_PLUGIN_LOADER (object);
     PdPluginLoaderPrivate *priv;
 
     priv = pd_plugin_loader_get_instance_private (self);
+    action = pd_plugin_job_get_action (plugin_job);
 
     /* Iterate all the plugins, check whether it supports this function,
      * and run it if it does. */
@@ -35,7 +41,8 @@ pd_plugin_loader_call_func (PdPluginLoader *self,
         PdPlugin *plugin;
 
         plugin = g_ptr_array_index (priv->plugins, i);
-        symbol = pd_plugin_is_function_supported (plugin, func_name);
+        symbol = pd_plugin_is_function_supported (plugin,
+                                                  pd_plugin_job_action_to_function_name (action));
         if (symbol != NULL)
         {
             PluginFunc plugin_func;
@@ -49,6 +56,23 @@ pd_plugin_loader_call_func (PdPluginLoader *self,
             g_warning ("Function not found.");
         }
     }
+
+    return;
+}
+
+void
+pd_plugin_loader_call_func_async (PdPluginLoader *self,
+                                  PdPluginJob *plugin_job,
+                                  GCancellable *cancellable,
+                                  GAsyncReadyCallback callback,
+                                  gpointer user_data)
+{
+    g_autoptr (GTask) task = NULL;
+
+    task = g_task_new (self, cancellable, callback, user_data);
+    g_task_set_task_data (task, plugin_job, NULL);
+
+    g_task_run_in_thread (task, pd_plugin_loader_call_func);
 }
 
 void

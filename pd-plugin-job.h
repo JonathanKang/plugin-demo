@@ -15,6 +15,7 @@ typedef enum
 
 G_DECLARE_FINAL_TYPE (PdPluginJob, pd_plugin_job, PD, PLUGIN_JOB, GObject)
 
+const gchar *pd_plugin_job_action_to_function_name (PdPluginAction action);
 PdPluginAction pd_plugin_job_get_action (PdPluginJob *plugin_job);
 
 #define pd_plugin_job_newv(a,...) PD_PLUGIN_JOB(g_object_new (PD_TYPE_PLUGIN_JOB, "action", a, __VA_ARGS__))

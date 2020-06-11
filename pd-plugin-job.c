@@ -18,6 +18,17 @@ enum {
 
 static GParamSpec *properties [N_PROPS];
 
+const gchar *
+pd_plugin_job_action_to_function_name (PdPluginAction action)
+{
+    if (action == PD_PLUGIN_ACTION_HELLO_WORLD)
+    {
+        return "pd_plugin_print";
+    }
+
+    return NULL;
+}
+
 PdPluginAction pd_plugin_job_get_action (PdPluginJob *self)
 {
     return self->action;
